@@ -4,8 +4,9 @@ import { Relay } from "./Relay.ts";
 const relay = Relay.instance;
 
 const handler = async (req: Request) => {
-  const publicKey = req.headers.get("Public-Key");
-  if (!publicKey) {
+  const url = new URL(req.url);
+  const publicKey = decodeURIComponent(url.searchParams.get("publicKey") || "");
+  if (publicKey === "") {
     return new Response("Unathorized", {
       status: 401,
     });
