@@ -1,72 +1,72 @@
 export class Relay {
   private static _instance?: Relay;
-  private socketToPublicKey: Map<WebSocket, string>;
-  private publicKeyToSockets: Map<string, WebSocket[]>;
-  private publicKeyToChannel: Map<string, BroadcastChannel>;
+  private socketToId: Map<WebSocket, string>;
+  private idToSockets: Map<string, WebSocket[]>;
+  private idToChannel: Map<string, BroadcastChannel>;
 
   protected constructor() {
-    this.socketToPublicKey = new Map<WebSocket, string>();
-    this.publicKeyToSockets = new Map<string, WebSocket[]>();
-    this.publicKeyToChannel = new Map<string, BroadcastChannel>();
+    this.socketToId = new Map<WebSocket, string>();
+    this.idToSockets = new Map<string, WebSocket[]>();
+    this.idToChannel = new Map<string, BroadcastChannel>();
   }
 
   public static get instance(): Relay {
     return (Relay._instance ??= new Relay());
   }
 
-  public add(publicKey: string, socket: WebSocket): void {
-    this.socketToPublicKey.set(socket, publicKey);
-    const sockets = this.getSocketsByPublicKey(publicKey);
+  public add(id: string, socket: WebSocket): void {
+    this.socketToId.set(socket, id);
+    const sockets = this.getSocketsById(id);
     if (sockets.length === 0) {
-      const channel = new BroadcastChannel(publicKey);
+      const channel = new BroadcastChannel(id);
       channel.onmessage = (ev: MessageEvent) => {
-        this.sendToSocketsInternally(publicKey, ev.data);
+        this.sendToSocketsInternally(id, ev.data);
       };
-      this.publicKeyToChannel.set(publicKey, channel);
+      this.idToChannel.set(id, channel);
     }
-    this.publicKeyToSockets.set(publicKey, [...sockets, socket]);
+    this.idToSockets.set(id, [...sockets, socket]);
   }
 
-  public getPublicKeyBySocket(socket: WebSocket): string {
-    return this.socketToPublicKey.get(socket) || "";
+  public getIdBySocket(socket: WebSocket): string {
+    return this.socketToId.get(socket) || "";
   }
 
-  public getSocketsByPublicKey(publicKey: string): WebSocket[] {
-    return this.publicKeyToSockets.get(publicKey) || [];
+  public getSocketsById(id: string): WebSocket[] {
+    return this.idToSockets.get(id) || [];
   }
 
   public remove(socket: WebSocket): void {
-    const publicKey = this.getPublicKeyBySocket(socket);
-    const sockets = this.getSocketsByPublicKey(publicKey);
+    const id = this.getIdBySocket(socket);
+    const sockets = this.getSocketsById(id);
     if (sockets.length > 1) {
-      this.publicKeyToSockets.set(
-        publicKey,
-        sockets.filter((s) => s !== socket),
+      this.idToSockets.set(
+        id,
+        sockets.filter((s) => s !== socket)
       );
     } else {
-      const channel = this.publicKeyToChannel.get(publicKey);
+      const channel = this.idToChannel.get(id);
       channel?.close();
-      this.publicKeyToChannel.delete(publicKey);
-      this.publicKeyToSockets.delete(publicKey);
+      this.idToChannel.delete(id);
+      this.idToSockets.delete(id);
     }
-    this.socketToPublicKey.delete(socket);
+    this.socketToId.delete(socket);
   }
 
-  private sendToSocketsInternally(publicKey: string, message: string): void {
-    const sockets = this.getSocketsByPublicKey(publicKey);
+  private sendToSocketsInternally(id: string, message: string): void {
+    const sockets = this.getSocketsById(id);
     for (const socket of sockets) {
       socket.send(message);
     }
   }
 
-  public send(publicKey: string, message: string): void {
-    const channel = this.publicKeyToChannel.get(publicKey);
+  public send(id: string, message: string): void {
+    const channel = this.idToChannel.get(id);
     channel?.postMessage(message);
-    this.sendToSocketsInternally(publicKey, message);
+    this.sendToSocketsInternally(id, message);
   }
 
   public close(): void {
-    for (const socket of this.socketToPublicKey.keys()) {
+    for (const socket of this.socketToId.keys()) {
       socket.close();
       this.remove(socket);
     }

@@ -5,20 +5,25 @@ const relay = Relay.instance;
 
 const handler = async (req: Request) => {
   const url = new URL(req.url);
-  const publicKey = decodeURIComponent(url.searchParams.get("publicKey") || "");
-  if (publicKey === "") {
+  const id = decodeURIComponent(url.searchParams.get("id") || "");
+  if (id === "") {
     return new Response("Unathorized", {
       status: 401,
     });
   }
   if (req.method === "POST") {
     const message = await req.text();
-    relay.send(publicKey, message);
+    if (id === "") {
+      return new Response("No destination", {
+        status: 400,
+      });
+    }
+    relay.send(id, message);
     return new Response("Message sent", { status: 200 });
   }
   const { socket, response } = Deno.upgradeWebSocket(req);
   socket.onopen = () => {
-    relay.add(publicKey, socket);
+    relay.add(id, socket);
     setTimeout(() => {
       socket.close();
     }, 60_000);
