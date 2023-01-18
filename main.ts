@@ -5,10 +5,13 @@ const relay = Relay.instance;
 
 const handler = async (req: Request) => {
   const url = new URL(req.url);
+  const headers = new Headers();
+  headers.set("Access-Control-Allow-Origin", "*");
   const id = decodeURIComponent(url.searchParams.get("id") || "");
   if (id === "") {
     return new Response("Unathorized", {
       status: 401,
+      headers,
     });
   }
   if (req.method === "POST") {
@@ -16,10 +19,11 @@ const handler = async (req: Request) => {
     if (id === "") {
       return new Response("No destination", {
         status: 400,
+        headers,
       });
     }
     relay.send(id, message);
-    return new Response("Message sent", { status: 200 });
+    return new Response("Message sent", { status: 200, headers });
   }
   const { socket, response } = Deno.upgradeWebSocket(req);
   socket.onopen = () => {
