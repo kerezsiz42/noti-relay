@@ -2,12 +2,15 @@ export class Relay {
   private static _instance?: Relay;
   private socketToId: Map<WebSocket, string>;
   private idToSockets: Map<string, WebSocket[]>;
-  private idToChannel: Map<string, BroadcastChannel>;
+  private broadcastChannel: BroadcastChannel;
 
   protected constructor() {
     this.socketToId = new Map<WebSocket, string>();
     this.idToSockets = new Map<string, WebSocket[]>();
-    this.idToChannel = new Map<string, BroadcastChannel>();
+    this.broadcastChannel = new BroadcastChannel("noti-relay");
+    this.broadcastChannel.onmessage = (ev: MessageEvent) => {
+      this.sendToSocketsInternally(ev.data.id, ev.data.message);
+    };
   }
 
   public static get instance(): Relay {
@@ -17,13 +20,6 @@ export class Relay {
   public add(id: string, socket: WebSocket): void {
     this.socketToId.set(socket, id);
     const sockets = this.getSocketsById(id);
-    if (sockets.length === 0) {
-      const channel = new BroadcastChannel(id);
-      channel.onmessage = (ev: MessageEvent) => {
-        this.sendToSocketsInternally(id, ev.data);
-      };
-      this.idToChannel.set(id, channel);
-    }
     this.idToSockets.set(id, [...sockets, socket]);
   }
 
@@ -44,9 +40,6 @@ export class Relay {
         sockets.filter((s) => s !== socket)
       );
     } else {
-      const channel = this.idToChannel.get(id);
-      channel?.close();
-      this.idToChannel.delete(id);
       this.idToSockets.delete(id);
     }
     this.socketToId.delete(socket);
@@ -60,12 +53,12 @@ export class Relay {
   }
 
   public send(id: string, message: string): void {
-    const channel = this.idToChannel.get(id);
-    channel?.postMessage(message);
+    this.broadcastChannel.postMessage(message);
     this.sendToSocketsInternally(id, message);
   }
 
   public close(): void {
+    this.broadcastChannel.close();
     for (const socket of this.socketToId.keys()) {
       socket.close();
       this.remove(socket);

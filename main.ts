@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.171.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.175.0/http/server.ts";
 import { Relay } from "./Relay.ts";
 
 const relay = Relay.instance;
