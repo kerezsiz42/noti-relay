@@ -29,7 +29,7 @@ const handler = async (req: Request) => {
     }
     case "OPTIONS": {
       headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-      headers.set("Access-Control-Allow-Headers", "");
+      headers.set("Access-Control-Allow-Headers", "Content-Type");
       headers.set("Access-Control-Max-Age", "36000");
       return new Response(undefined, { status: 200, headers });
     }
