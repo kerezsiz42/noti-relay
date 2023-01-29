@@ -23,7 +23,7 @@ const handler = async (req: Request) => {
       if (!id) {
         return new Response("No destination", { status: 400, headers });
       }
-      const message = await req.blob();
+      const message = await req.text();
       relay.send(id, message);
       return new Response("Message sent", { status: 200, headers });
     }

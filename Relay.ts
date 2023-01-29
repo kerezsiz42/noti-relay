@@ -45,14 +45,14 @@ export class Relay {
     this.socketToId.delete(socket);
   }
 
-  private sendToSocketsInternally(id: string, message: Blob): void {
+  private sendToSocketsInternally(id: string, message: string): void {
     const sockets = this.getSocketsById(id);
     for (const socket of sockets) {
       socket.send(message);
     }
   }
 
-  public send(id: string, message: Blob): void {
+  public send(id: string, message: string): void {
     this.broadcastChannel.postMessage({ id, message });
     this.sendToSocketsInternally(id, message);
   }
