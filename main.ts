@@ -4,11 +4,11 @@ import { Relay } from "./Relay.ts";
 const relay = Relay.instance;
 
 const handler = async (req: Request) => {
+  const url = new URL(req.url);
   const headers = new Headers();
-  headers.set("Access-Control-Allow-Origin", "*");
   switch (req.method) {
     case "GET": {
-      const id = req.headers.get("X-Authentication");
+      const id = decodeURIComponent(url.searchParams.get("id") || "");
       if (!id) {
         return new Response("Unauthorized", { status: 401, headers });
       }
@@ -18,7 +18,8 @@ const handler = async (req: Request) => {
       return response;
     }
     case "POST": {
-      const id = req.headers.get("X-Destination");
+      headers.set("Access-Control-Allow-Origin", "*");
+      const id = decodeURIComponent(url.searchParams.get("id") || "");
       if (!id) {
         return new Response("No destination", { status: 400, headers });
       }
