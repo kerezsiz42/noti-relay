@@ -6,6 +6,7 @@ const relay = Relay.instance;
 const handler = async (req: Request) => {
   const url = new URL(req.url);
   const headers = new Headers();
+  headers.set("Access-Control-Allow-Origin", "*");
   switch (req.method) {
     case "GET": {
       const id = decodeURIComponent(url.searchParams.get("id") || "");
@@ -18,7 +19,6 @@ const handler = async (req: Request) => {
       return response;
     }
     case "POST": {
-      headers.set("Access-Control-Allow-Origin", "*");
       const id = decodeURIComponent(url.searchParams.get("id") || "");
       if (!id) {
         return new Response("No destination", { status: 400, headers });
@@ -29,10 +29,7 @@ const handler = async (req: Request) => {
     }
     case "OPTIONS": {
       headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-      headers.set(
-        "Access-Control-Allow-Headers",
-        "X-Authentication, X-Destination"
-      );
+      headers.set("Access-Control-Allow-Headers", "");
       headers.set("Access-Control-Max-Age", "36000");
       return new Response(undefined, { status: 200, headers });
     }
