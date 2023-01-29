@@ -9,7 +9,6 @@ export class Relay {
     this.idToSockets = new Map<string, WebSocket[]>();
     this.broadcastChannel = new BroadcastChannel("noti-relay");
     this.broadcastChannel.onmessage = (ev: MessageEvent) => {
-      console.log(ev.data.id, ev.data.message);
       this.sendToSocketsInternally(ev.data.id, ev.data.message);
     };
   }
@@ -46,14 +45,14 @@ export class Relay {
     this.socketToId.delete(socket);
   }
 
-  private sendToSocketsInternally(id: string, message: string): void {
+  private sendToSocketsInternally(id: string, message: Blob): void {
     const sockets = this.getSocketsById(id);
     for (const socket of sockets) {
       socket.send(message);
     }
   }
 
-  public send(id: string, message: string): void {
+  public send(id: string, message: Blob): void {
     this.broadcastChannel.postMessage({ id, message });
     this.sendToSocketsInternally(id, message);
   }
